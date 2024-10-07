@@ -28,7 +28,7 @@ public class Box : BaseStorageObject
             if (InternalExpirationDate.HasValue)
                 return InternalExpirationDate.Value;
             if (CreationDate.HasValue)
-                return CreationDate.Value.AddDays(100);
+                return CreationDate.Value.AddDays(ExpirationFromCreationDays);
             throw new ArgumentNullException(nameof(ExpirationDate));
         }
     }
