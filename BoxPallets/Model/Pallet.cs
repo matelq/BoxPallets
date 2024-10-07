@@ -2,7 +2,7 @@
 
 namespace BoxPallets.Model;
 
-public class Pallet : BaseStorageObject
+public sealed class Pallet : BaseStorageObject
 {
     private const double PalletBaseWeight = 30;
     public Pallet(int id, double width, double height, double depth)
@@ -14,22 +14,34 @@ public class Pallet : BaseStorageObject
     public override double Volume => Boxes.Sum(b => b.Volume) + Height * Width * Depth;
     public override DateOnly ExpirationDate => Boxes.Count != 0 ? Boxes.Min(b => b.ExpirationDate) : DateOnly.MinValue;
 
-    private IEnumerable<Box> boxes = new List<Box>();
-    public IReadOnlyCollection<Box> Boxes => boxes.ToImmutableList();
+    private List<Box> _boxes = new List<Box>();
+    public IReadOnlyCollection<Box> Boxes => _boxes.ToImmutableList();
 
 
     public void SetBoxes(IEnumerable<Box> newBoxes)
     {
         ThrowIfAnyBoxNotFitting(newBoxes);
-        boxes = newBoxes.ToList();
+        _boxes = new(newBoxes);
     }
 
-    public void AddBoxes(IEnumerable<Box> boxesToAdd)
+    public void AddBox(Box box)
     {
-        ThrowIfAnyBoxNotFitting(boxesToAdd);
-        boxesToAdd = boxesToAdd.ToList();
+        ThrowIfNotFitting(box);
+        _boxes.Add(box);
     }
 
+    public void AddBoxes(IEnumerable<Box> boxes)
+    {
+        ThrowIfAnyBoxNotFitting(boxes);
+        _boxes.AddRange(boxes);
+    }
+
+    public void ThrowIfNotFitting(Box box)
+    {
+        if (!IsBoxFitting(box))
+            throw new ArgumentOutOfRangeException();
+    }
+    
     public void ThrowIfAnyBoxNotFitting(IEnumerable<Box> boxes)
     {
         if (boxes.Count() != 0 && boxes.Where(b => !IsBoxFitting(b)).Any())
